@@ -1,0 +1,63 @@
+핵심정리:
+    @@@@@@@@@@@@@@@@시스템 로그 분석 및 관리@@@@@@@@@@@@@@@@
+    rsyslog(rocket-fast system for log processing): 로그파일 생성 데몬
+
+    /etc/rsyslog.conf: rsyslog의 작동 규칙을 정의하는 파일
+        conf파일의 규칙 작성형식: facility.priority   action
+        uucp,news.crit  /var/log/news: uucp와 news라는 facility에서 발생한 crit위험수준의 메시지 발생 시 /var/log/news로그에 기록하라
+        *.emerg     :omusermsg.*: 모든 facility에서 발생한 emerg 위험수준의 메시지 발생 시 모든 유저에게 전달하라
+
+    rsyslog는 om, im모듈로 분업하여 로그의 생성, 전송을 한다
+    @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    
+    logrotate: 오래된 로그파일 정리 유틸리티, crond가 주도함
+        logrotate --force /etc/logrotate.conf: 구성파일을 읽어서 강제로 로테이션 작동
+        -> 로테이트는 일정주기 또는 일정사이즈를 기준으로 백로그를 만들지만 직접 명령을 수행하여
+        유저가 수동으로 백로그를 만들 수 있음
+
+    /etc/logrotate.conf: 로테이션 규칙 정의
+        /var/log/wtmp {
+            rotate 5 -> 백로그5개 현재로그1개 = 최대 총 6개
+            mail posein@gamil.com
+            size 100k -> 사이즈 100k되면 로테이트
+            dateext -> 날짜추가
+        }
+
+    /var/log/logrotate.status -> 각 로그파일별 로테이트 날짜가 기록된 로그
+        
+    @@@@@@@@@@@@@@@@@로그 관련 파일@@@@@@@@@@@@@@@@@@@@@@@@
+    대부분의 로그파일은 /var/log/ 경로에 존재
+    /var/log/messages
+    /var/log/secure
+    /var/log/xferlog -> ftp 접속기록 로그, 포맷은 14개 구성
+        Tue Jul 5 16:37:21 2022 1 ::ffff:192.168.56.1 708475 /home/posein/lin_joon.jpg b _ i r posein ftp 0 * c
+    /var/log/boot.log -> 부팅 시 동작하는 데몬로그
+    /var/log/dmesg -> 커널 부트 로그, 부팅 시 로그
+
+
+    #아래 세 개는 바이너리 로그파일
+    /var/log/xtmp: 유저의 서버 로그인 기록 등
+    /var/log/lastlog: 유저의 마지막 기록
+    /var/log/btmp: 유저의 연결 실패 기록
+    
+    <명령어>
+    last: ftp, telnet 등의 클라이언트가 시스템에서 한 기록에 관한 로그 출력(/var/log/wtmp)
+        last: /var/log/wtmp 정보 출력
+        last posein: posein 유저의 로그인 정보 출력
+        last reboot: 유저가 재부팅한 정보 출력
+        last -1 reboot: 최근 1개만큼의 재부팅 정보 출력
+        last --file /var/log/wtmp.1: 1번 백로그 정보 출력
+        last 2: tty2번으로 로그인된 정보 출력
+
+    lastlog: 유저의 가장 최근 로그인 이력 출력(/var/log/lastlog)
+        lastlog -u posein
+
+    lastb: 로그인 실패 정보 출력, last와 사용법 동일
+        lastb -3: 가장 최근 3개의 로그인 실패이력 출력
+
+    dmesg: 커널 링 버퍼 출력+비우기(커널링 버퍼 = 커널의 동작에 관한 로그 기록 임시메모리 공간 Rocky Linux 8 = 1024KB)
+        dmesg -c: 출력하고 버퍼 비우기
+
+    logger: 유저가 직접 로그를 생성하는 명령(기본경로 /var/log/messages)
+        logger --id --file /var/log/messages 'Hello Linux': logger프로세스의 pid를 포함하여 로그기록
+        
